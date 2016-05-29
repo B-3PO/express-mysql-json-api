@@ -122,7 +122,11 @@ function processType(config) {
       if (item.manyToMany === true) {
         item.parentField = item.parentField || config.table;
         // TODO find out current conventions
-        item.table = item.table || item.parentField + '_x_' + item.field;
+        item.table = item.table || [item.parentField, item.field].sort(function (a, b) {
+          if (a < b) { return -1; }
+          if (a > b) { return 1; }
+          return 0;
+        }).join('_');
       } else {
         if (item.many === true) { item.parentField = item.parentField || config.table; }
         item.table = item.table || config.table;
@@ -158,12 +162,19 @@ function CreateResource(config) {
 
   // version
   router.head('/:id?', function (req, res) {
+    res.setHeader('Access-Control-Expose-Headers', 'jam-versioning, jam-handshake, jam-no-updates');
     handshake.do(req, res, config);
   });
 
   // get data
   router.get('/:id?', function (req, res) {
-    dataHandler.get(req, res, config);
+    res.setHeader('Cache-Control', 'public, max-age=31557600');
+
+    if (req.get('jam-get-structure') !== undefined) {
+      dataHandler.getStructure(req, res, config);
+    } else {
+      dataHandler.get(req, res, config);
+    }
   });
 
   // delete resource
@@ -172,17 +183,23 @@ function CreateResource(config) {
   });
 
   // delete relation
-  router.delete('/:id/relationship/:property', function(req, res) {
+  router.delete('/:id/relationships/:property/:relationId?', function(req, res) {
     dataHandler.deleteRelations(req, res, config);
   });
 
   // relationships
-  router.put('/:id/relationship/:property', function(req, res) {
+  router.post('/:id/relationships/:property/:relationId?', function(req, res) {
     dataHandler.relationship(req, res, config);
   });
 
-  // add/edit
+  // add
   router.put('/:id?', function(req, res) {
+    dataHandler.addEdit(req, res);
+  });
+
+
+  // edit
+  router.post('/:id?', function(req, res) {
     dataHandler.addEdit(req, res);
   });
 

@@ -1,20 +1,15 @@
 var http = require('http');
 var express = require('express');
 var path = require('path');
-// var logger = require('morgan');
+var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var dataManager = require('../../index.js');
 
 var app = express();
-var server = http.createServer(app);
-
-
-// app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
+var port = 4000;
+var ipaddress = '0.0.0.0';
 
 
 
@@ -28,6 +23,35 @@ dataManager.addDatabase({
 });
 
 
+var server = http.createServer(app);
+server.listen(port, ipaddress, function (){
+  console.log('Server Listening on port: 4000');
+});
+
+
+var allowCrossDomain = function(req, res, next) {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, jam-handshake, jam-version, jam-get-structure, jam-test');
+
+    // intercept OPTIONS method
+    if ('OPTIONS' == req.method) {
+      res.send(200);
+    }
+    else {
+      next();
+    }
+};
+
+app.use(logger('dev'));
+app.use(allowCrossDomain);
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
+
+
+
 dataManager.addType({
   name: 'locations',
   table: 'locations',
@@ -39,25 +63,8 @@ dataManager.addType({
   relationships: [
     {
       type: 'people',
-      // table: 'locations_x_people',
-      // parentField: 'locations',
-      // field: 'people',
       manyToMany: true
     }
-
-    // {
-    //   type: 'people', // childs type
-    //   table: 'locations_x_people', // optional table for manyToMany
-    //   field: 'name' // options field name for single or many
-
-         // Option field names for many to many
-    //   parentField: 'locations',
-
-         // set one of these three
-    //   single: true,
-    //   many: true,
-    //   manyToMany: true
-    // }
   ]
 });
 
@@ -81,7 +88,8 @@ dataManager.addType({
     {
       type: 'jobs',
       field: 'job',
-      single: true
+      single: true,
+      constrain: true
     }
   ]
 });
@@ -97,45 +105,23 @@ dataManager.addType({
 
 
 
-
 app.use('/locations', dataManager.CreateResource({
-  name: 'work',
-  // database
+  name: 'locations',
   type: 'locations',
   relationships: {
-    employees: {resource: 'employees'}
-  },
-  postSerializer: function (data) {
-
-    return data
-  },
-  complete: function (data) {
-
+    people: {resource: 'people'}
   }
 }));
 
 app.use('/people', dataManager.CreateResource({
-  name: 'employees',
+  name: 'people',
   type: 'people',
   relationships: {
-    jobs: {resource: 'jobs'}
+    job: {resource: 'job'}
   }
 }));
 
-app.use('/jobs', dataManager.CreateResource({
-  name: 'jobs',
+app.use('/job', dataManager.CreateResource({
+  name: 'job',
   type: 'jobs'
 }));
-
-
-
-
-
-
-exports.listen = function () {
-  server.listen.apply(server, arguments);
-};
-
-exports.close = function (callback) {
-  server.close(callback);
-};
