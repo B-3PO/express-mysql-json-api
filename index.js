@@ -118,7 +118,6 @@ function processType(config) {
       item.field = item.field || item.type;
       item.alias = item.type + item.field;
       item.parentTable = config.table;
-
       if (item.manyToMany === true) {
         item.parentField = item.parentField || config.table;
         // TODO find out current conventions
@@ -127,8 +126,9 @@ function processType(config) {
           if (a > b) { return 1; }
           return 0;
         }).join('_');
+      } else if (item.oneToMany === true) {
+        item.parentField = item.parentField || (config.table + '_id');
       } else {
-        if (item.many === true) { item.parentField = item.parentField || config.table; }
         item.table = item.table || config.table;
       }
     });
@@ -189,18 +189,18 @@ function CreateResource(config) {
 
   // relationships
   router.post('/:id/relationships/:property/:relationId?', function(req, res) {
-    dataHandler.relationship(req, res, config);
+    dataHandler.relationship(req, res);
   });
 
   // add
   router.put('/:id?', function(req, res) {
-    dataHandler.addEdit(req, res);
+    dataHandler.addEdit(req, res, config);
   });
 
 
   // edit
   router.post('/:id?', function(req, res) {
-    dataHandler.addEdit(req, res);
+    dataHandler.addEdit(req, res, config);
   });
 
 

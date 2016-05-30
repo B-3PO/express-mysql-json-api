@@ -31,7 +31,7 @@ describe("Routes", function() {
 
     it('should return json api', function(done) {
       request.get({
-        url:'http://localhost:8000/locations?include=employees.jobs'
+        url:'http://localhost:8000/locations?include=people.jobs'
       }, function (error, response, body) {
         var parsed = JSON.parse(body);
         expect(parsed).to.have.property('data');
@@ -70,7 +70,7 @@ describe("Routes", function() {
 
     it('should delete resource', function(done) {
       request.del({
-        url:'http://localhost:8000/jobs/77c55edf-0602-4671-b308-c116f9cc8f97'
+        url:'http://localhost:8000/job/77c55edf-0602-4671-b308-c116f9cc8f97'
       }, function (error, response, body) {
         expect(response.statusCode).to.be.equal(200);
         done();
@@ -79,7 +79,7 @@ describe("Routes", function() {
 
     it('should add back resource', function(done) {
       request.put({
-        url:'http://localhost:8000/jobs/77c55edf-0602-4671-b308-c116f9cc8f97',
+        url:'http://localhost:8000/job/77c55edf-0602-4671-b308-c116f9cc8f97',
         body: {
           data: {
             id: '77c55edf-0602-4671-b308-c116f9cc8f97',
@@ -102,7 +102,7 @@ describe("Routes", function() {
 
     it('should delete single relationship', function(done) {
       request.del({
-        url:'http://localhost:8000/people/33a87db0-ff5a-11e5-86aa-5e5517507c66/relationship/jobs',
+        url:'http://localhost:8000/people/33a87db0-ff5a-11e5-86aa-5e5517507c66/relationships/job',
         body: {
           data: {
             type: 'jobs',
@@ -117,7 +117,7 @@ describe("Routes", function() {
     });
     it('should add back single relationship', function(done) {
       request.put({
-        url:'http://localhost:8000/people/33a87db0-ff5a-11e5-86aa-5e5517507c66/relationship/jobs',
+        url:'http://localhost:8000/people/33a87db0-ff5a-11e5-86aa-5e5517507c66/relationships/job',
         body: {
           data: {
             type: 'jobs',
@@ -135,7 +135,7 @@ describe("Routes", function() {
 
     it('should remove many to many relationship', function(done) {
       request.del({
-        url:'http://localhost:8000/locations/9d16411c-fe77-11e5-86aa-5e5517507c66/relationship/employees',
+        url:'http://localhost:8000/locations/9d16411c-fe77-11e5-86aa-5e5517507c66/relationships/people',
         body: {
           data: {
             type: 'people',
@@ -150,7 +150,7 @@ describe("Routes", function() {
     });
     it('should add back many to many relationship', function(done) {
       request.put({
-        url:'http://localhost:8000/locations/9d16411c-fe77-11e5-86aa-5e5517507c66/relationship/employees',
+        url:'http://localhost:8000/locations/9d16411c-fe77-11e5-86aa-5e5517507c66/relationships/people',
         body: {
           data: {
             type: 'people',

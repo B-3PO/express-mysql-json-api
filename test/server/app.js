@@ -64,13 +64,27 @@ dataManager.addType({
     {
       type: 'people',
       manyToMany: true
+    },
+    {
+      type: 'rooms',
+      oneToMany: true
     }
   ]
 });
 
 dataManager.addType({
+  name: 'rooms',
+  table: 'rooms',
+  constrain: true,
+  attributes: {
+    name: {dataType: dataManager.dataType.STRING}
+  }
+});
+
+dataManager.addType({
   name: 'people',
   table: 'people',
+  constrain: true,
   attributes: {
     name: {
       dataType: 'string',
@@ -88,8 +102,7 @@ dataManager.addType({
     {
       type: 'jobs',
       field: 'job',
-      single: true,
-      constrain: true
+      single: true
     }
   ]
 });
@@ -109,8 +122,14 @@ app.use('/locations', dataManager.CreateResource({
   name: 'locations',
   type: 'locations',
   relationships: {
-    people: {resource: 'people'}
+    people: {resource: 'people'},
+    rooms: {resource: 'rooms'}
   }
+}));
+
+app.use('/rooms', dataManager.CreateResource({
+  name: 'rooms',
+  type: 'rooms'
 }));
 
 app.use('/people', dataManager.CreateResource({
