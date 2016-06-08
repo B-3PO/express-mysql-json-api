@@ -11,6 +11,10 @@ var types = sharedData.types;
 var pools = sharedData.pools;
 
 
+var typeContstructor = require('./lib/type.js');
+var resourceContstructor = require('./lib/resource.js');
+
+
 
 /**
   * @name nodeJSONapi
@@ -69,6 +73,9 @@ function addDatabase(config) {
  *
  */
 function addType(config) {
+ typeContstructor.create(config);
+}
+function addType_old(config) {
   if (config.name === undefined) {
     console.error('Type Requires a property of "name"');
     return;
@@ -82,60 +89,60 @@ function addType(config) {
   types[config.name] = processType(config);
 }
 
-function processType(config) {
-  var keys;
-  var key;
-
-  config.database = config.database || 'default';
-  config.table = config.table || config.name;
-
-  if (typeof config.attributes === 'object' && config.attributes !== null) {
-    keys = Object.keys(config.attributes);
-    key = keys.pop();
-
-    while (key !== undefined) {
-      if (config.attributes[key].build === undefined) {
-        config.attributes[key].field = config.attributes[key].field || key;
-        config.attributes[key].alias = config.name + config.attributes[key].field;
-        config.attributes[key].type = config.name;
-        config.attributes[key].name = key;
-      } else {
-        config.attributes[key].build.forEach(function (buildField) {
-          if (buildField.field !== undefined) {
-            buildField.alias = config.name + buildField.field;
-            buildField.type = config.name;
-            buildField.name = buildField.field;
-          }
-        });
-      }
-
-      key = keys.pop();
-    }
-  }
-
-  if (typeof config.relationships === 'object' && config.relationships !== null) {
-    config.relationships.forEach(function (item) {
-      item.field = item.field || item.type;
-      item.alias = item.type + item.field;
-      item.parentTable = config.table;
-      if (item.manyToMany === true) {
-        item.parentField = item.parentField || config.table;
-        // TODO find out current conventions
-        item.table = item.table || [item.parentField, item.field].sort(function (a, b) {
-          if (a < b) { return -1; }
-          if (a > b) { return 1; }
-          return 0;
-        }).join('_');
-      } else if (item.oneToMany === true) {
-        item.parentField = item.parentField || (config.table + '_id');
-      } else {
-        item.table = item.table || config.table;
-      }
-    });
-  }
-
-  return config;
-}
+// function processType(config) {
+//   var keys;
+//   var key;
+//
+//   config.database = config.database || 'default';
+//   config.table = config.table || config.name;
+//
+//   if (typeof config.attributes === 'object' && config.attributes !== null) {
+//     keys = Object.keys(config.attributes);
+//     key = keys.pop();
+//
+//     while (key !== undefined) {
+//       if (config.attributes[key].build === undefined) {
+//         config.attributes[key].field = config.attributes[key].field || key;
+//         config.attributes[key].alias = config.name + config.attributes[key].field;
+//         config.attributes[key].type = config.name;
+//         config.attributes[key].name = key;
+//       } else {
+//         config.attributes[key].build.forEach(function (buildField) {
+//           if (buildField.field !== undefined) {
+//             buildField.alias = config.name + buildField.field;
+//             buildField.type = config.name;
+//             buildField.name = buildField.field;
+//           }
+//         });
+//       }
+//
+//       key = keys.pop();
+//     }
+//   }
+//
+//   if (typeof config.relationships === 'object' && config.relationships !== null) {
+//     config.relationships.forEach(function (item) {
+//       item.field = item.field || item.type;
+//       item.alias = item.type + item.field;
+//       item.parentTable = config.table;
+//       if (item.manyToMany === true) {
+//         item.parentField = item.parentField || config.table;
+//         // TODO find out current conventions
+//         item.table = item.table || [item.parentField, item.field].sort(function (a, b) {
+//           if (a < b) { return -1; }
+//           if (a > b) { return 1; }
+//           return 0;
+//         }).join('_');
+//       } else if (item.oneToMany === true) {
+//         item.parentField = item.parentField || (config.table + '_id');
+//       } else {
+//         item.table = item.table || config.table;
+//       }
+//     });
+//   }
+//
+//   return config;
+// }
 
 
 
@@ -150,6 +157,9 @@ function processType(config) {
  * @return {object} Express Router
  */
 function CreateResource(config) {
+  return resourceContstructor.create(config);
+}
+function CreateResource_old(config) {
   var router;
 
   if (resources[config.name] !== undefined) {
@@ -189,7 +199,7 @@ function CreateResource(config) {
 
   // relationships
   router.post('/:id/relationships/:property/:relationId?', function(req, res) {
-    dataHandler.relationship(req, res);
+    dataHandler.relationship(req, res, config);
   });
 
   // add
