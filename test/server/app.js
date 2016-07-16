@@ -6,19 +6,28 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var dataManager = require('../../index.js');
+// var resourcePatch = require('./resourcePatch.js');
 
 var app = express();
 var port = 4000;
 var ipaddress = '0.0.0.0';
 
+var menus = require('./menus.js');
 
+
+
+// var connection = mysql.createConnection({
+//   host: '127.0.0.1',
+//   user: 'tester',
+//   password: 'testTester',
+//   database: 'newAdminExamles'
+// });
 
 
 
 dataManager.addDatabase({
   host: '127.0.0.1',
-  user: 'tester',
-  password: 'testTester',
+  user: 'root',
   database: 'datamanager',
   connectionLimit: 10,
   default: true
@@ -33,7 +42,7 @@ server.listen(port, ipaddress, function (){
 
 var allowCrossDomain = function(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, jam-handshake, jam-version, jam-get-structure, jam-test');
 
     // intercept OPTIONS method
@@ -52,6 +61,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+
+
+// menus();
 
 
 
@@ -92,6 +104,14 @@ dataManager.addType({
   }
 });
 
+dataManager.addType({
+  name: 'tester',
+  table: 'tester',
+  attributes: {
+    name: {dataType: dataManager.dataType.STRING}
+  }
+});
+
 
 dataManager.addType({
   name: 'jobs',
@@ -103,7 +123,7 @@ dataManager.addType({
 });
 
 
-app.use('/locations', dataManager.CreateResource({
+var locationsManager = dataManager.CreateResource({
   name: 'locations',
   type: 'locations',
   relationships: {
@@ -116,9 +136,15 @@ app.use('/locations', dataManager.CreateResource({
       oneToMany: true,
       // constraint: true,
       field: 'locations_id'
+    },
+    tester: {
+      resource: 'tester',
+      manyToMany: true
     }
   }
-}));
+});
+app.use('/locations', locationsManager);
+
 
 
 app.use('/rooms', dataManager.CreateResource({
@@ -133,6 +159,10 @@ app.use('/people', dataManager.CreateResource({
     job: {
       resource: 'job',
       field: 'job'
+    },
+    tester: {
+      resource: 'tester',
+      manyToMany: true
     }
   }
 }));
@@ -141,6 +171,33 @@ app.use('/job', dataManager.CreateResource({
   name: 'job',
   type: 'jobs'
 }));
+
+
+var testerManager = dataManager.CreateResource({
+  name: 'tester',
+  type: 'tester'
+});
+app.use('/tester', testerManager);
+
+testerManager.onCreate(function (req, res) {
+  // console.log(req.body);
+  //
+  // var query = 'upda users.first,users.last,userscope.admin,userscope.organization_id,userscope.venue_id from users';
+  // query += ' left join userscope on userscope.user_id = users.id';
+  // query += ' where email=\'' + email + '\' and password=\'' + password + '\'';
+
+  // connection.query(query, function(error, rows, fields) {
+  //   if (error) {
+  //     return;
+  //   }
+  // });
+
+
+  res.end();
+});
+testerManager.onRelationUpdate(function (req, res) {
+  res.end();
+});
 
 
 //
