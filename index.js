@@ -1,17 +1,10 @@
 var express = require('express');
-var mysql = require('mysql');
-var handshake = require('./lib/handshake.js');
-var sharedData = require('./lib/sharedData.js');
-var dataTypes = require('./lib/dataTypes.js');
-var resources = sharedData.resources;
-var types = sharedData.types;
-var pools = sharedData.pools;
 
-
-var typeContstructor = require('./lib/type.js');
-var resourceContstructor = require('./lib/resource.js');
-
-
+var database = require('./lib2/database.js');
+var type = require('./lib2/type.js');
+var resourceManager = require('./lib2/resource.js');
+var dataTypes = require('./lib2/dataTypes.js');
+var resourceRouter = require('./lib2/router.js');
 
 /**
   * @name nodeJSONapi
@@ -24,7 +17,7 @@ var resourceContstructor = require('./lib/resource.js');
   */
 module.exports = {
   addDatabase: addDatabase,
-  addType: addType,
+  defineType: defineType,
   CreateResource: CreateResource,
   dataType: dataTypes.types
 };
@@ -42,25 +35,13 @@ module.exports = {
  *
  */
 function addDatabase(config) {
-  // TODO validate config
-
-  pools[config.database] = mysql.createPool({
-    connectionLimit: config.connectionlimit || 100,
-    host: config.host,
-    user: config.user,
-    password: config.password,
-    database: config.database
-  });
-
-  if (config.default === true || pools.default === undefined) {
-    pools.default = pools[config.database];
-  }
+  database.add(config);
 }
 
 
 
 /**
- * @name addType
+ * @name defineType
  * @function
  *
  * @description
@@ -69,8 +50,8 @@ function addDatabase(config) {
  * @param {object} config - type config
  *
  */
-function addType(config) {
- typeContstructor.create(config);
+function defineType(config) {
+ type.define(config);
 }
 
 
@@ -86,5 +67,6 @@ function addType(config) {
  * @return {object} Express Router
  */
 function CreateResource(config) {
-  return resourceContstructor.create(config);
+  var resource = resourceManager.Create(config);
+  return resourceRouter.Create(resource);
 }

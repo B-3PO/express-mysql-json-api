@@ -17,9 +17,8 @@ var ipaddress = '0.0.0.0';
 
 dataManager.addDatabase({
   host: '127.0.0.1',
-  user: 'tester',
-  password: 'testTester',
-  database: 'datamanager',
+  user: 'root',
+  database: 'jsonapiTest',
   connectionLimit: 10,
   default: true
 });
@@ -55,187 +54,126 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 
-dataManager.addType({
-  name: 'locations',
-  table: 'locations',
+dataManager.defineType({
+  name: 'menus',
+  table: 'menus',
+
   attributes: {
     name: {dataType: dataManager.dataType.STRING},
-    city: {dataType: dataManager.dataType.STRING},
-    state: {dataType: dataManager.dataType.STRING}
+    type: {dataType: dataManager.dataType.STRING},
+    description: {dataType: dataManager.dataType.STRING}
   }
 });
 
 
-dataManager.addType({
-  name: 'rooms',
-  table: 'rooms',
+dataManager.defineType({
+  name: 'categories',
+  table: 'categories',
+
+  attributes: {
+    name: {dataType: dataManager.dataType.STRING},
+    type: {dataType: dataManager.dataType.STRING},
+    description: {dataType: dataManager.dataType.STRING}
+  },
+
+  relationships: [
+    {
+      type: 'taxGroups',
+      manyToMany: true,
+      table: 'categories_tax_groups',
+      field: 'category_id',
+      relationshipField: 'tax_group_id'
+    }
+  ]
+});
+
+dataManager.defineType({
+  name: 'taxGroups',
+  table: 'tax_groups',
+
   attributes: {
     name: {dataType: dataManager.dataType.STRING}
   }
 });
 
-dataManager.addType({
-  name: 'people',
-  table: 'people',
+
+
+dataManager.defineType({
+  name: 'menuItems',
+  table: 'menu_items',
+  extends: 'items',
+
   attributes: {
-    name: {
-      dataType: 'string',
-      build: [
-        {field: 'first', dataType: dataManager.dataType.STRING},
-        {join: ' '},
-        {field: 'last', dataType: dataManager.dataType.STRING}
-      ]
+    name: {dataType: dataManager.dataType.STRING},
+    price: {dataType: dataManager.dataType.NUMBER},
+    baseItem: {extends: true}
+  },
+
+  relationships: [
+    {
+      type: 'menus',
+      field: 'menu_id',
+      single: true
     },
-    age: {dataType: dataManager.dataType.INT},
-    email: {dataType: dataManager.dataType.STRING},
-    working: {dataType: dataManager.dataType.BOOLEAN}
-  }
+    {
+      type: 'categories',
+      field: 'category_id',
+      single: true
+    },
+    {
+      type: 'items',
+      field: 'item_id',
+      single: true
+    }
+  ]
 });
 
+dataManager.defineType({
+  name: 'items',
+  table: 'items',
 
-dataManager.addType({
-  name: 'jobs',
-  table: 'jobs',
   attributes: {
-    title: {dataType: dataManager.dataType.STRING},
-    pay: {dataType: dataManager.dataType.CURRENCY}
+    name: {dataType: dataManager.dataType.STRING},
+    price: {dataType: dataManager.dataType.NUMBER},
+    description: {dataType: dataManager.dataType.STRING},
   }
 });
 
 
-app.use('/locations', dataManager.CreateResource({
-  name: 'locations',
-  type: 'locations',
+
+
+app.use('/menuItems', dataManager.CreateResource({
+  name: 'menuItems',
+  type: 'menuItems'
+}));
+
+app.use('/categories', dataManager.CreateResource({
+  name: 'categories',
+  type: 'categories',
   relationships: {
-    people: {
-      resource: 'people',
-      manyToMany: true
+    menuItems: {
+      resource: 'menuItems'
     },
-    rooms: {
-      resource: 'rooms',
-      oneToMany: true,
-      // constraint: true,
-      field: 'locations_id'
+    taxGroups: {
+      resource: 'taxGroups'
     }
   }
 }));
 
 
-app.use('/rooms', dataManager.CreateResource({
-  name: 'rooms',
-  type: 'rooms'
+app.use('/taxGroups', dataManager.CreateResource({
+  name: 'taxGroups',
+  type: 'taxGroups'
 }));
 
-app.use('/people', dataManager.CreateResource({
-  name: 'people',
-  type: 'people',
+
+
+app.use('/menus', dataManager.CreateResource({
+  name: 'menus',
+  type: 'menus',
   relationships: {
-    job: {
-      resource: 'job',
-      field: 'job'
+    categories: {
+      resource: 'categories'
     }
   }
 }));
-
-app.use('/job', dataManager.CreateResource({
-  name: 'job',
-  type: 'jobs'
-}));
-
-
-//
-//
-//
-// dataManager.addType({
-//   name: 'locations',
-//   table: 'locations',
-//   attributes: {
-//     name: {dataType: dataManager.dataType.STRING},
-//     city: {dataType: dataManager.dataType.STRING},
-//     state: {dataType: dataManager.dataType.STRING}
-//   },
-//   relationships: [
-//     {
-//       type: 'people',
-//       manyToMany: true
-//     },
-//     {
-//       type: 'rooms',
-//       oneToMany: true
-//     }
-//   ]
-// });
-//
-//
-// dataManager.addType({
-//   name: 'rooms',
-//   table: 'rooms',
-//   constraint: true,
-//   attributes: {
-//     name: {dataType: dataManager.dataType.STRING}
-//   }
-// });
-//
-// dataManager.addType({
-//   name: 'people',
-//   table: 'people',
-//   constraint: true,
-//   attributes: {
-//     name: {
-//       dataType: 'string',
-//       build: [
-//         {field: 'first', dataType: dataManager.dataType.STRING},
-//         {join: ' '},
-//         {field: 'last', dataType: dataManager.dataType.STRING}
-//       ]
-//     },
-//     age: {dataType: dataManager.dataType.INT},
-//     email: {dataType: dataManager.dataType.STRING},
-//     working: {dataType: dataManager.dataType.BOOLEAN}
-//   },
-//   relationships: [
-//     {
-//       type: 'jobs',
-//       field: 'job',
-//       single: true
-//     }
-//   ]
-// });
-//
-// dataManager.addType({
-//   name: 'jobs',
-//   table: 'jobs',
-//   attributes: {
-//     title: {dataType: dataManager.dataType.STRING},
-//     pay: {dataType: dataManager.dataType.CURRENCY}
-//   }
-// });
-//
-//
-//
-// app.use('/locations', dataManager.CreateResource({
-//   name: 'locations',
-//   type: 'locations',
-//   relationships: {
-//     people: {resource: 'people'},
-//     rooms: {resource: 'rooms'}
-//   }
-// }));
-//
-// app.use('/rooms', dataManager.CreateResource({
-//   name: 'rooms',
-//   type: 'rooms'
-// }));
-//
-// app.use('/people', dataManager.CreateResource({
-//   name: 'people',
-//   type: 'people',
-//   relationships: {
-//     job: {resource: 'job'}
-//   }
-// }));
-//
-// app.use('/job', dataManager.CreateResource({
-//   name: 'job',
-//   type: 'jobs'
-// }));
