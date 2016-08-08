@@ -1,9 +1,10 @@
 var express = require('express');
-var database = require('./lib3/database.js');
-var typeManager = require('./lib3/typeManager.js');
-var resourceManager = require('./lib3/resourceManager.js');
-var resourceRouter = require('./lib3/resourceRouter.js');
 
+var database = require('./lib2/database.js');
+var type = require('./lib2/type.js');
+var resourceManager = require('./lib2/resource.js');
+var dataTypes = require('./lib2/dataTypes.js');
+var resourceRouter = require('./lib2/router.js');
 
 /**
   * @name nodeJSONapi
@@ -18,16 +19,8 @@ module.exports = {
   addDatabase: addDatabase,
   defineType: defineType,
   CreateResource: CreateResource,
-
-  // data types
-  STRING: 'string',
-  NUMBER: 'number',
-  ID: 'id',
-  UUID: 'uuid',
-  BOOLEAN: 'boolean'
+  dataType: dataTypes.types
 };
-
-
 
 
 
@@ -47,8 +40,6 @@ function addDatabase(config) {
 
 
 
-
-
 /**
  * @name defineType
  * @function
@@ -60,7 +51,7 @@ function addDatabase(config) {
  *
  */
 function defineType(config) {
- typeManager.define(config);
+ type.define(config);
 }
 
 

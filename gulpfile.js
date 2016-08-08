@@ -3,6 +3,6 @@ var nodemon = require('gulp-nodemon');
 
 gulp.task('default', function () {
   nodemon({
-    script: 'test/server/app.js'
+    script: 'testServer/server.js'
   });
 })
