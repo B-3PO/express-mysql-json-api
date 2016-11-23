@@ -1,6 +1,7 @@
 var express = require('express');
 var structureManager = require('./structureManager');
 var dataGetter = require('./dataGetter');
+var format = require('./formatter');
 
 
 module.exports = {
@@ -16,11 +17,15 @@ function Create(resource) {
   router.get('/:id?', function (req, res) {
     // res.setHeader('Cache-Control', 'public, max-age=31557600');
     var stucture = structureManager.get(resource, req.query.include);
-    dataGetter(stucture);
-    // dataBuilder(stucture, req.params.id, req.query.include, function () {
-    //
-    // });
-    res.end();
+    var nestedData = dataGetter(stucture, function (error, nestedData) {
+      if (error) {
+        res.status(409).send(error);
+        return;
+      }
+
+      var formatted = format(nestedData, stucture);
+      res.send(formatted);
+    });
   });
 
 

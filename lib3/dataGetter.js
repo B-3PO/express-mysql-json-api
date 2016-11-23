@@ -7,6 +7,7 @@ var cache = {};
 module.exports = function (structure, id, include) {
   id = id || '';
   include = include || '';
+  var callback = arguments[arguments.length-1];
   var queryObject;
   var hash = util.hashString(structure.resource.name+include+id);
   if (cache[hash] !== undefined) {
@@ -16,15 +17,14 @@ module.exports = function (structure, id, include) {
     cache[hash] = queryObject;
   }
 
-
   database.query(queryObject.query, function (error, data) {
     if (error) {
-      // callback(error);
+      callback(error);
       return;
     }
 
-    // build rows using query items
-    buildData(data, queryObject);
+    var nestedData = buildData(data, queryObject);
+    callback(undefined, nestedData);
   });
 };
 
@@ -34,24 +34,20 @@ module.exports = function (structure, id, include) {
 
 
 function buildData(data, queryObject) {
-  var obj = {
-    data: [],
-    included: []
-  };
-
+  var nestedData = [];
   var row = data.pop();
   while (row !== undefined) {
-    nestRow(row, queryObject);
-    return;
+    nestedData.push(nestRow(row, queryObject));
     row = data.pop();
   }
+  return nestedData;
 }
 
 
 function nestRow(row, queryObject) {
   var nest = {};
   walkForRow(row, queryObject.attributes, queryObject.structure.resource, nest);
-  console.log(nest)
+  return nest;
 }
 
 function walkForRow(row, attributes, resource, nest) {
