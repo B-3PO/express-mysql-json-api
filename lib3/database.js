@@ -36,7 +36,7 @@ function query(query, callback) {
   pools.default.getConnection(function(err, connection) {
     connection.query(query, function(err, rows, fields) {
       if (err !== null) {
-        console.log(err);
+        console.error(err);
         connection.release();
         callback(err);
         return;

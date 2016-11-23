@@ -21,11 +21,19 @@ function get(name) {
 function define(options) {
   validateOptions(options);
 
+  // convert array of strings to object
+  if (options.attributes && options.attributes.length && typeof options.attributes[0] === 'string') {
+    options.attributes = options.attributes.reduce(function (a, attr) {
+      a[attr] = attr;
+      return a;
+    }, {});
+  }
+
   var typeObj = {
     name : options.name,
     database: options.database || 'default',
     table: options.table,
-    relationships: options.relationships,
+    relationships: options.relationships || [],
     fields: [],
     attributes: [],
   };
@@ -60,6 +68,14 @@ function define(options) {
     }
   });
 
+  if (!typeObj.uuidField) {
+    typeObj.uuidField = {
+      field: 'id',
+      name: 'id',
+      dataType: 'uuid'
+    };
+  }
+
   types[options.name] = typeObj;
 }
 
@@ -77,9 +93,9 @@ function validateOptions(options) {
     throw Error('Type Requires a object containing fields');
   }
 
-  if (typeof options.attributes !== 'object' || options.attributes === null) {
-    throw Error('Type Requires a object containing attributes');
-  }
+  // if (typeof options.attributes !== 'object' || options.attributes === null || ) {
+  //   throw Error('Type Requires a object containing attributes');
+  // }
 
   if (types[options.name] !== undefined) {
     throw Error('Type of "' + options.name + '" has been added already');

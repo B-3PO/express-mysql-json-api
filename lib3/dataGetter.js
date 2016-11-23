@@ -4,7 +4,7 @@ var idCounter = 0;
 var cache = {};
 
 
-module.exports = function (structure, id, include) {
+module.exports = function (req, structure, id, include) {
   id = id || '';
   include = include || '';
   var callback = arguments[arguments.length-1];
@@ -13,7 +13,7 @@ module.exports = function (structure, id, include) {
   if (cache[hash] !== undefined) {
     queryObject = cache[hash];
   } else {
-    queryObject = CreateQueryObject(structure, id);
+    queryObject = CreateQueryObject(req, structure, id);
     cache[hash] = queryObject;
   }
 
@@ -68,7 +68,7 @@ function walkForRow(row, attributes, resource, nest) {
   if (resource.relationships) {
     Object.keys(resource.relationships).forEach(function (key) {
       var rel = getTypRelFromResourceRel(resource.type, resource.relationships[key].type.name);
-      if (rel.mete && rel.meta.toMany === true) {
+      if (rel.meta && rel.meta.toMany === true) {
         walkForRow(row, attributes, resource.relationships[key], nest[key][0]);
       } else {
         nest[key] = {};
@@ -97,7 +97,7 @@ function getTypRelFromResourceRel(type, name) {
 // ----- Query object Builder ----------------
 
 
-function CreateQueryObject(structure, id) {
+function CreateQueryObject(req, structure, id) {
   var joins = [];
   var attributes = {};
   var addedTypes = {};
@@ -109,17 +109,16 @@ function CreateQueryObject(structure, id) {
   };
   addAttributes(structure.parentType);
   buildRelationships(structure.parentType);
-
-
+  console.log(buildQuery(req))
   return {
-    query: buildQuery(),
+    query: buildQuery(req),
     structure: structure,
     attributes: attributes
   };
 
 
 
-  function buildQuery() {
+  function buildQuery(req) {
     var str = 'select ';
     str += Object.keys(attributes).map(function (idKey) {
       return Object.keys(attributes[idKey]).reduce(function (a, key) {
@@ -129,6 +128,27 @@ function CreateQueryObject(structure, id) {
     }).join(',');
     str += '\nfrom ' + parentTable.table + ' ' + parentTable.tableAlias + '\n';
     str += joins.join('\n');
+
+    if (structure.filters && structure.filters.length) {
+      str += ' where ';
+
+      str += structure.filters.map(function (item) {
+        var itemStr = '';
+        if (item.field) {
+          itemStr += parentTable.tableAlias+'.'+item.field;
+          if (item.equal) {
+            itemStr += ' = ';
+            itemStr += typeof item.equal === 'function' ? item.equal(req) : item.equal;
+          }
+
+          if (item.notEqual) {
+            itemStr += ' != ';
+            itemStr += typeof item.equal === 'function' ? item.notEqual(req) : item.equal;
+          }
+        }
+        return itemStr;
+      }).join(' and ');
+    }
 
     return str;
   }
@@ -179,14 +199,13 @@ function CreateQueryObject(structure, id) {
 
   function addAttributes(type) {
     attributes[type.id] = {};
-    type.attributes.forEach(function (attr) {
+    (type.attributes || []).forEach(function (attr) {
       attributes[type.id][type.prefix+attr.name] = {
         table: type.table,
         tableAlias: type.prefix+type.table,
         attr: attr
       };
     });
-
     attributes[type.id][type.prefix+type.uuidField.name] = {
       table: type.table,
       tableAlias: type.prefix+type.table,

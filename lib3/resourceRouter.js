@@ -12,17 +12,16 @@ module.exports = {
 
 function Create(resource) {
   var router = express.Router();
-
   // get data
   router.get('/:id?', function (req, res) {
     // res.setHeader('Cache-Control', 'public, max-age=31557600');
     var stucture = structureManager.get(resource, req.query.include);
-    var nestedData = dataGetter(stucture, function (error, nestedData) {
+    var nestedData = dataGetter(req, stucture, function (error, nestedData) {
       if (error) {
         res.status(409).send(error);
         return;
       }
-
+      
       var formatted = format(nestedData, stucture);
       res.send(formatted);
     });

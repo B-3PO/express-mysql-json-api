@@ -16,11 +16,11 @@ function get(resource, include) {
   var hash = util.hashString(resource.name+include);
   if (cache[hash] === undefined) {
     var built = resourceManager.get(resource.name);
-    if (include !== '') {
-      built = pickBuilt(built, buildIncludeObj(include));
-    }
-    cache[hash] = built;
+    cache[hash] = pickBuilt(built, buildIncludeObj(include || ''));
   }
+
+  // NOTE temp place folder for passing filters along
+  cache[hash].filters = resource.filters;
 
   return cache[hash];
 }
@@ -49,7 +49,6 @@ function pickBuilt(built, include) {
   var types = [];
   var picked = pickResource(built, include, usedTypes, 0, types);
   connectTypes(types, 0);
-
   return {
     resource: picked,
     parentType: getParentType(types)
@@ -58,7 +57,11 @@ function pickBuilt(built, include) {
 
 
 function getParentType(types) {
-  if (types.length === 1) { return types[0]; }
+  if (types.length === 1) {
+    // TODO  the double nested array happens when you have a root resource with no relationships
+    if (types[0] instanceof Array) { return types[0][0]; }
+    return types[0];
+  }
 
   var type;
   var j;

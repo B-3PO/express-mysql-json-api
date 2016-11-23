@@ -8,6 +8,7 @@ module.exports = function (data, structure) {
     data.forEach(function (sub) {
       traverse(sub, structure.resource, formatted, true);
     });
+    // traverse(data[0], structure.resource, formatted, true);
   } else {
     traverse(data, structure.resource, formatted, true);
   }
@@ -17,7 +18,7 @@ module.exports = function (data, structure) {
   });
 
   formatted.included = Object.keys(formatted.included).reduce(function (a, typeKey) {
-    return a = [].concat(Object.keys(formatted.included[typeKey]).map(function (idKey) {
+    return a.concat(Object.keys(formatted.included[typeKey]).map(function (idKey) {
       return formatted.included[typeKey][idKey];
     }));
   }, []);
@@ -59,6 +60,7 @@ function traverse(data, resource, formatted, root) {
     Object.keys(resource.relationships).forEach(function (key) {
       var toMany;
       var id;
+      var added;
       resource.type.relationshipsReference.every(function (relItem) {
         if (relItem.type === resource.relationships[key].name) {
           toMany = relItem.manyToMany;
@@ -77,14 +79,22 @@ function traverse(data, resource, formatted, root) {
 
       if (data.hasOwnProperty(key)) {
         if (toMany) {
-          id = data[key][resource.relationships[key].type.idField];
-          if (id) {
-            item.relationships[key].data.push({
-              id: id,
-              type: resource.relationships[key].type.name
-            });
-            traverse(data[key], resource.relationships[key], formatted);
-          }
+          added = addRelationship(
+            item.relationships[key].data,
+            data[key][resource.relationships[key].type.idField],
+            resource.relationships[key].type.name
+          );
+          if (added) { traverse(data[key], resource.relationships[key], formatted); }
+
+          // id = data[key][resource.relationships[key].type.idField];
+          // if (id) {
+          //   item.relationships[key].data.push({
+          //     id: id,
+          //     type: resource.relationships[key].type.name
+          //   });
+          //
+          //   traverse(data[key], resource.relationships[key], formatted);
+          // }
         } else if (isNonEmptyObject(data[key])) {
           item.relationships[key].data = {};
           item.relationships[key].data.id = data[key][resource.relationships[key].type.idField];
@@ -94,6 +104,23 @@ function traverse(data, resource, formatted, root) {
       }
     });
   }
+}
+
+
+function addRelationship(arr, id, type) {
+  // console.log(id, arr)
+  var i = 0;
+  var length = arr.length;
+  while(i < length) {
+    if (arr[i].id === id && arr[i].type === type) { console.log('sdfdslkjshdf');return false; }
+    i += 1;
+  }
+
+  arr.push({
+    id: id,
+    type: type
+  });
+  return true;
 }
 
 
