@@ -8,29 +8,22 @@ module.exports = {
 
 
 
-function get(name, parent) {
+function get(name) {
   var type = types[name];
   if (type === undefined) { throw Error('Cannot find type "' + name + '"'); }
-
-  if (parent !== undefined) {
-    if (type.parents === undefined) { type.parents = []; }
-    if (type.parents.indexOf(parent) === -1) {
-      type.parents.push(parent);
-    }
-  }
-
   if (type.built === true) { return type; }
   type.built = true;
-
-  if (type.extends !== undefined) {
-    type.extends = get(type.extends);
-  }
+  type.parents = [];
 
   if (type.relationships !== undefined) {
     type.relationships.forEach(function (rel) {
-      rel.type = get(rel.type, type);
+      var relType = get(rel.type);
+      relType.parents.push(type);
+      rel.type = relType;
     });
   }
+
+  // TODO may need to sweep all types for relationships incase a manyToManu is not specified. currently both types need to have the relationship
 
   return type;
 }
@@ -48,28 +41,74 @@ function define(options) {
     name : options.name,
     database: options.database || 'default',
     table: options.table,
-    extends: options.extends,
-    attributes: formatAttributes(options.attributes),
-    relationships: options.relationships
+    relationships: options.relationships,
+    fields: [],
+    attributes: [],
   };
 
-  types[options.name] = typeObj;
-}
+  // var attrKeys = Object.keys(options.attributes);
+  // Object.keys(options.fields).map(function (key) {
+  //   var field = options.fields[key];
+  //   if (field.dataType === 'id') {
+  //     typeObj.idField = key;
+  //   }
+  //   if (field.dataType === 'uuid') {
+  //     typeObj.uuidField = {
+  //       field: key,
+  //       name: 'id',
+  //       dataType: field.dataType
+  //     };
+  //   }
+  //   if (options.attributes[key] !== undefined) {
+  //     typeObj.attributes.push({
+  //       field: key,
+  //       name: options.attributes[key],
+  //       dataType: field.dataType
+  //     });
+  //   }
+  //
+  //   typeObj.fields.push({
+  //     name: key,
+  //     dataType: field.dataType
+  //   });
+  //
+  // });
 
-function formatAttributes(attrs) {
-  return Object.keys(attrs).map(function (key) {
-    var attr = attrs[key];
-    var obj = {name: key};
+  Object.keys(options.fields).forEach(function (key) {
+    var field = options.fields[key];
+    var attr = options.attributes[key];
 
-    if (attr.extends !== undefined) {
-      obj.extends = attr.extends;
-    } else {
-      obj.field = attr.field || key;
-      obj.dataType = attr.dataType || 'string';
+    if (attr) {
+      typeObj.attributes.push({
+        field: key,
+        name: attr,
+        dataType: field.dataType
+      });
+
+      typeObj.fields.push({
+        name: key,
+        dataType: field.dataType
+      });
     }
 
-    return obj;
+    if (field.dataType === 'uuid') {
+      typeObj.uuidField = {
+        field: key,
+        name: 'id',
+        dataType: field.dataType
+      };
+    }
+
+    if (field.dataType === 'id') {
+      typeObj.idField = {
+        field: key,
+        name: 'data_id',
+        dataType: field.dataType
+      };
+    }
   });
+  console.log(typeObj.uuidField)
+  types[options.name] = typeObj;
 }
 
 
@@ -80,6 +119,10 @@ function validateOptions(options) {
 
   if (typeof options.name !== 'string' || options.name === '') {
     throw Error('Required property `name` of type `string`');
+  }
+
+  if (typeof options.fields !== 'object' || options.fields === null) {
+    throw Error('Type Requires a object containing fields');
   }
 
   if (typeof options.attributes !== 'object' || options.attributes === null) {

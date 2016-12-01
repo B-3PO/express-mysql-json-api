@@ -55,6 +55,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 dataManager.defineType({
+  name: 'locations',
+  table: 'locations',
+
+  attributes: {
+    name: {dataType: dataManager.dataType.STRING},
+    city: {dataType: dataManager.dataType.STRING},
+    state: {dataType: dataManager.dataType.STRING}
+  }
+});
+
+dataManager.defineType({
   name: 'menus',
   table: 'menus',
 

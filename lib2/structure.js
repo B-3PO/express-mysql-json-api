@@ -1,21 +1,29 @@
 var resourceManager = require('./resource.js');
-var typeManager = require('./type.js')
+var util = require('./util.js');
+var cache = {};
 
 module.exports = {
   get: get
 };
 
 
-
+// caches results based on resource and includes
 function get(resource, include) {
-  var includeObj;
-  var built = buildResource(resource);
-  return pickBuilt(built, buildIncludeObj(include));
+  include = include || '';
+  var hash = util.hashString(resource.name+include);
+  if (cache[hash] === undefined) {
+    var built = resourceManager.get(resource.name);
+    if (include !== '') {
+      built = pickBuilt(built, buildIncludeObj(include));
+    }
+    cache[hash] = built;
+  }
+
+  return cache[hash];
 }
 
 
 function buildIncludeObj(include) {
-  if (include === undefined) { return undefined; }
   var obj = {};
   include.split(',').forEach(function (path) {
     buildIncludePath(path, obj);

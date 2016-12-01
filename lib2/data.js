@@ -1,5 +1,5 @@
 var structureManager = require('./structure');
-var dataRetriever = require('./dataRetriever')
+var dataRetriever = require('./dataRetriever');
 
 module.exports = {
   get: get

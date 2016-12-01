@@ -4,10 +4,16 @@ var pools = {};
 
 
 module.exports = {
-  add: add
+  add: add,
+  get: get,
+  query: query
 };
 
 
+
+function get(name) {
+  return pools[name];
+}
 
 function add(config) {
   // TODO validate config
@@ -23,4 +29,22 @@ function add(config) {
   if (config.default === true || pools.default === undefined) {
     pools.default = pools[config.database];
   }
+}
+
+
+function query(query, callback) {
+  // TODO allow for passing of db name
+  pools.default.getConnection(function(err, connection) {
+    connection.query(query, function(err, rows, fields) {
+      if (err !== null) {
+        console.log(err);
+        connection.release();
+        callback(err);
+        return;
+      }
+
+      connection.release();
+      callback(undefined, rows);
+    });
+  });
 }

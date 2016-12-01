@@ -170,3 +170,78 @@ app.use('/items', dataManager.CreateResource({
   name: 'items',
   type: 'items'
 }));
+
+
+
+
+
+// --- transformers ---
+
+transformer.defineResource('menus', {
+  table: 'menus',
+  fields: {
+    id: {dataType: transformer.ID},
+    name: {dataTpe: transformer.STRING}
+  },
+
+  relationships: [
+    {
+      resouce: 'menu_items.menu_id',
+      field: 'id'
+    }
+  ]
+});
+
+
+transformer.defineResource('menu_items', {
+  table: 'menu_items',
+  fields: {
+    id: {dataType: transformer.ID},
+    item_id: {dataType: transformer.INT},
+    menu_id: {dataType: transformer.INT},
+    name: {dataTpe: transformer.STRING},
+    base_price: {dataType: transformer.NUMBER}
+  },
+
+  relationships: [
+    {
+      resource: 'items.id',
+      field: 'item_id'
+    }
+  ]
+});
+
+transformer.defineResource('items', {
+  table: 'items',
+  fields: {
+    id: {dataType: transformer.ID},
+    name: {dataTpe: transformer.STRING},
+    price: {dataType: transformer.NUMBER}
+  }
+});
+
+
+var struct = transformer.defineStruct({
+  id: 'menus.id',
+  name: 'menus.name',
+
+  menuItems: transformer.defineStruct({
+    id: 'menu_items.id',
+    name: 'items.name',
+    price: {
+      default: 'menu_items.base_price',
+      override: 'items.price'
+    }
+  });
+});
+
+
+
+// var menuRouter = transformer.routes(struct);
+// var menuItemsRouter = transformer.Routes(struct.menuItems);
+// var itemsRouter = transformer.routes('itmes');
+//
+//
+// app.use('/menus', menuRouter);
+// app.use('/menu_items', menuItemsRouter);
+// app.use('/items', itemsRouter);

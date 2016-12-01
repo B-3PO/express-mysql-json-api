@@ -1,5 +1,6 @@
 const types = {
   ID: 'id',
+  UUID: 'uuid',
   STRING: 'string',
   NUMBER: 'number',
   CURRENCY: 'currency',
